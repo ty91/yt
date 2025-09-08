@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Production
+dist/
+dist-ssr/
+build/
+
+# Cache and temp files
+*.local
+.cache/
+.temp/
+
+# Logs
+*.log
+
+# Lock files
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Environment variables
+.env*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+
+# OpenAPI
+types/generated/
+
+# React Router
+.react-router/

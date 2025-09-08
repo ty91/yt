@@ -1,0 +1,24 @@
+{
+  "typescript.preferGoToSourceDefinition": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "always",
+    "source.organizeImports": "always",
+    "source.removeUnusedImports": "always",
+    "source.fixAll.ts": "always",
+    "source.sortImports": "always",
+    "source.addMissingImports.ts": "always",
+  },
+  "eslint.useFlatConfig": true,
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  // Help ESLint auto-detect the workspace folder
+  "eslint.workingDirectories": [
+    { "mode": "auto" }
+  ],
+  // Use workspace TypeScript for best compatibility
+  "typescript.tsdk": "node_modules/typescript/lib"
+}
