@@ -3,7 +3,9 @@ export function Welcome() {
     <main className="flex items-center justify-center pt-16 pb-4">
       <div className="flex-1 flex flex-col items-center gap-16 min-h-0">
         <header className="flex flex-col items-center gap-6 text-center px-4">
-          <p className="text-sm font-semibold uppercase tracking-widest text-blue-500">Vite + React</p>
+          <p className="text-sm font-semibold uppercase tracking-widest text-blue-500">
+            Vite + React
+          </p>
           <h1 className="text-4xl sm:text-5xl font-semibold text-gray-900 dark:text-gray-50">
             Welcome to your new frontend
           </h1>
@@ -17,7 +19,7 @@ export function Welcome() {
         </header>
         <div className="max-w-[320px] w-full space-y-6 px-4">
           <nav className="rounded-3xl border border-gray-200 p-6 dark:border-gray-700 space-y-4">
-            <p className="leading-6 text-gray-700 dark:text-gray-200 text-center">Helpful resources</p>
+            <p className="leading-6 text-gray-700 dark:text-gray-200 text-center">Resources</p>
             <ul className="space-y-2">
               {resources.map(({ href, label, description }) => (
                 <li key={href}>
