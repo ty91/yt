@@ -37,7 +37,7 @@ export default defineConfig([
         { name: 'Link', linkAttribute: 'to' },
         { name: 'NavLink', linkAttribute: 'to' },
       ],
-      'import/internal-regex': '^~/',
+      'import/internal-regex': '^@/',
       'import/resolver': {
         node: { extensions: ['.js', '.jsx', '.ts', '.tsx'] },
         typescript: { alwaysTryTypes: true },
@@ -95,7 +95,7 @@ export default defineConfig([
 
   // Node globals for config/build files
   {
-    files: ['eslint.config.js', 'vite.config.*', 'react-router.config.ts'],
+    files: ['eslint.config.js', 'vite.config.*'],
     languageOptions: {
       globals: globals.node,
       sourceType: 'module',
