@@ -3,7 +3,6 @@ import { type FormEvent, useEffect, useRef, useState } from 'react';
 type SsePayload = {
   type: 'log' | 'error' | 'complete';
   message?: string;
-  token?: string;
   filename?: string;
 };
 
@@ -124,19 +123,19 @@ export function App() {
         eventSourceRef.current = null;
       }
       const payload = parseSseData((messageEvent as MessageEvent).data);
-      if (!payload?.token) {
-        handleFailure('Download token missing.');
+      if (!payload?.filename) {
+        handleFailure('Download filename missing.');
         return;
       }
 
       try {
         setInfoMessage('Finalizing download…');
-        const response = await fetch(`/download/${payload.token}`);
+        const filename = payload.filename;
+        const response = await fetch(`/download/${encodeURIComponent(filename)}`);
         if (!response.ok) {
           throw new Error('Failed to fetch audio file.');
         }
         const blob = await response.blob();
-        const filename = payload.filename ?? 'audio.mp3';
         triggerBrowserDownload(blob, filename);
         setInfoMessage('Download started. Check your downloads folder.');
       } catch (error) {
