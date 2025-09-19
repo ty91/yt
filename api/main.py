@@ -19,6 +19,10 @@ DOWNLOAD_ROOT.mkdir(exist_ok=True)
 COOKIES_PATH = Path(__file__).resolve().parent / "files" / "youtube_cookie.txt"
 
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
 def _base_command(url: str) -> list[str]:
     command = [
         "yt-dlp",
@@ -31,8 +35,8 @@ def _base_command(url: str) -> list[str]:
         "--newline",
         "--no-playlist",
     ]
-    logging.info(os.listdir(COOKIES_PATH.parent))
-    logging.info(os.listdir(COOKIES_PATH.parent.parent))
+    logger.info(os.listdir(COOKIES_PATH.parent))
+    logger.info(os.listdir(COOKIES_PATH.parent.parent))
     if COOKIES_PATH.is_file():
         command += ["--cookies", str(COOKIES_PATH)]
     return command
