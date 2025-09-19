@@ -5,7 +5,7 @@ services:
     container_name: yt-api
     restart: unless-stopped
     volumes:
-      - ./files/youtube_cookie.txt:/app/files/youtube_cookie.txt
+      - ./youtube_cookie.txt:/app/files/youtube_cookie.txt
     networks:
       - yt-net
 
