@@ -4,8 +4,8 @@ services:
       context: ./api
     container_name: yt-api
     restart: unless-stopped
-    volumes:
-      - ./youtube_cookie.txt:/app/files/youtube_cookie.txt
+    environment:
+      - YOUTUBE_COOKIES=${YOUTUBE_COOKIES}
     networks:
       - yt-net
 

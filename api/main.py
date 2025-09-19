@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import json
 import logging
 import os
@@ -16,11 +17,20 @@ app = FastAPI()
 DOWNLOAD_ROOT = Path(__file__).resolve().parent / "download"
 DOWNLOAD_ROOT.mkdir(exist_ok=True)
 
-COOKIES_PATH = Path(__file__).resolve().parent / "files" / "youtube_cookie.txt"
-
+COOKIES_PATH = Path(__file__).resolve().parent / "youtube_cookies.txt"
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+# on startup
+@app.on_event("startup")
+def startup() -> None:
+    cookies = os.getenv("YOUTUBE_COOKIES")
+    if cookies:
+        cookies = base64.b64decode(cookies).decode("utf-8")
+        with open(COOKIES_PATH, "w") as f:
+            f.write(cookies)
 
 
 def _base_command(url: str) -> list[str]:
@@ -35,11 +45,9 @@ def _base_command(url: str) -> list[str]:
         "--newline",
         "--no-playlist",
     ]
-    logger.info(os.listdir(COOKIES_PATH))
-    logger.info(os.listdir(COOKIES_PATH.parent))
-    logger.info(os.listdir(COOKIES_PATH.parent.parent))
     if COOKIES_PATH.is_file():
         command += ["--cookies", str(COOKIES_PATH)]
+    logger.info(command)
     return command
 
 
@@ -63,10 +71,6 @@ async def _resolve_output_filename(url: str) -> str:
         "--print",
         "filename",
     ]
-    logger.info(command)
-    with open(COOKIES_PATH, "r") as f:
-        cookies = f.read()
-    logger.info(cookies)
     process = await asyncio.create_subprocess_exec(
         *command,
         stdout=asyncio.subprocess.PIPE,
