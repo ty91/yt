@@ -26,3 +26,9 @@ Send a request to `GET /health`.
    output `filename` located in `api/download/`.
 2. Retrieve the MP3 via `GET /download/{filename}`. The response streams the file with a
    `Content-Disposition` header.
+
+### Cookies (optional)
+
+If YouTube requires authentication, mount a cookies text file inside the container and set the
+`YT_DLP_COOKIES_PATH` environment variable (defaults to `/youtube_cookie.txt`). When the file exists,
+the backend automatically passes `--cookies` to `yt-dlp` for every request.

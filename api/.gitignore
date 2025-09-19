@@ -1,2 +1,3 @@
 download/
 .venv/
+__pycache__/

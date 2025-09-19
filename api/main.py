@@ -15,9 +15,11 @@ app = FastAPI()
 DOWNLOAD_ROOT = Path(__file__).resolve().parent / "download"
 DOWNLOAD_ROOT.mkdir(exist_ok=True)
 
+COOKIES_PATH = Path(os.getenv("YT_DLP_COOKIES_PATH", "/youtube_cookie.txt"))
+
 
 def _base_command(url: str) -> list[str]:
-    return [
+    command = [
         "yt-dlp",
         url,
         "-f",
@@ -28,6 +30,9 @@ def _base_command(url: str) -> list[str]:
         "--newline",
         "--no-playlist",
     ]
+    if COOKIES_PATH.is_file():
+        command += ["--cookies", str(COOKIES_PATH)]
+    return command
 
 
 @app.get("/health")
