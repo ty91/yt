@@ -62,6 +62,10 @@ async def _resolve_output_filename(url: str) -> str:
         "--print",
         "filename",
     ]
+    logger.info(command)
+    with open(COOKIES_PATH, "r") as f:
+        cookies = f.read()
+    logger.info(cookies)
     process = await asyncio.create_subprocess_exec(
         *command,
         stdout=asyncio.subprocess.PIPE,
