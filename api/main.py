@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import os
 import tempfile
 from pathlib import Path
@@ -30,8 +31,8 @@ def _base_command(url: str) -> list[str]:
         "--newline",
         "--no-playlist",
     ]
-    print(os.listdir(COOKIES_PATH.parent))
-    print(os.listdir(COOKIES_PATH.parent.parent))
+    logging.info(os.listdir(COOKIES_PATH.parent))
+    logging.info(os.listdir(COOKIES_PATH.parent.parent))
     if COOKIES_PATH.is_file():
         command += ["--cookies", str(COOKIES_PATH)]
     return command
