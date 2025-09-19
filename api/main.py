@@ -35,6 +35,7 @@ def _base_command(url: str) -> list[str]:
         "--newline",
         "--no-playlist",
     ]
+    logger.info(os.listdir(COOKIES_PATH))
     logger.info(os.listdir(COOKIES_PATH.parent))
     logger.info(os.listdir(COOKIES_PATH.parent.parent))
     if COOKIES_PATH.is_file():
