@@ -26,19 +26,19 @@ function parseSseData(raw: string | null): SsePayload | null {
   }
 }
 
-function triggerBrowserDownload(blob: Blob, filename: string) {
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
-}
+// Browser-initiated downloads are no longer used since the API writes
+// directly to the user-selected destination directory.
 
 export function App() {
   const [videoUrl, setVideoUrl] = useState('');
+  const [selectedDest, setSelectedDest] = useState<string | null>(() => {
+    return localStorage.getItem('destDir') || null;
+  });
+  const [isBrowseOpen, setIsBrowseOpen] = useState(false);
+  const [browsePath, setBrowsePath] = useState<string>('~');
+  const [browseEntries, setBrowseEntries] = useState<{ name: string; path: string }[]>([]);
+  const [browseParent, setBrowseParent] = useState<string | null>(null);
+  const [isBrowsing, setIsBrowsing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
@@ -49,6 +49,9 @@ export function App() {
   );
   const [, setConnectionError] = useState<string | null>(null);
   const connectionCheckInFlight = useRef(false);
+  const [copied, setCopied] = useState(false);
+  const UVX_CMD =
+    'uvx --from "git+https://github.com/ty91/yt.git@main#subdirectory=api" yt-api';
 
   useEffect(() => {
     return () => {
@@ -118,8 +121,9 @@ export function App() {
     setInfoMessage('Preparing download…');
     setLogs([]);
 
-    const encodedUrl = encodeURIComponent(videoUrl.trim());
-    const eventSource = new EventSource(`${API_BASE}/download/stream?url=${encodedUrl}`);
+    const params = new URLSearchParams({ url: videoUrl.trim() });
+    if (selectedDest) params.set('dest', selectedDest);
+    const eventSource = new EventSource(`${API_BASE}/download/stream?${params.toString()}`);
     eventSourceRef.current = eventSource;
 
     const handleFailure = (message: string) => {
@@ -177,24 +181,10 @@ export function App() {
         handleFailure('Download filename missing.');
         return;
       }
-
       try {
-        setInfoMessage('Finalizing download…');
         const filename = payload.filename;
-        const response = await fetch(`${API_BASE}/download/${encodeURIComponent(filename)}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch audio file.');
-        }
-        const blob = await response.blob();
-        triggerBrowserDownload(blob, filename);
-        setInfoMessage('Download started. Check your downloads folder.');
-      } catch (error) {
-        if (error instanceof Error) {
-          handleFailure(error.message);
-        } else {
-          handleFailure('Unexpected error.');
-        }
-        return;
+        const dest = selectedDest ?? '~';
+        setInfoMessage(`Saved to ${dest}/${filename}`);
       } finally {
         setIsSubmitting(false);
       }
@@ -209,6 +199,29 @@ export function App() {
             <h1 className="text-3xl font-semibold">YouTube to MP3</h1>
             <p className="mt-2 text-sm text-slate-300">connecting to the api on localhost:6172</p>
             <div className="mx-auto mt-4 h-6 w-6 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />
+            <div className="mt-8 text-left">
+              <p className="text-sm text-slate-300">Start the local API with:</p>
+              <div className="mt-2 flex items-center gap-2">
+                <pre className="flex-1 overflow-x-auto rounded-md border border-slate-700 bg-slate-900 p-3 text-left font-mono text-xs text-slate-200">
+{UVX_CMD}
+                </pre>
+                <button
+                  type="button"
+                  className="shrink-0 rounded-md bg-blue-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-600"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(UVX_CMD);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 1500);
+                    } catch {
+                      // noop
+                    }
+                  }}
+                >
+                  {copied ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
+            </div>
           </div>
         </section>
       </main>
@@ -225,6 +238,46 @@ export function App() {
           </p>
         </div>
         <form className="flex w-full flex-col gap-3" onSubmit={handleSubmit}>
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-left">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Destination directory
+              </p>
+              <p className="text-xs text-slate-400">
+                {selectedDest ? selectedDest : 'Not selected'}
+              </p>
+            </div>
+            <button
+              type="button"
+              className="rounded-md bg-slate-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-600"
+              onClick={async () => {
+                setIsBrowseOpen(true);
+                const startPath = selectedDest || '~';
+                setBrowsePath(startPath);
+                setIsBrowsing(true);
+                try {
+                  const res = await fetch(
+                    `${API_BASE}/browse?path=${encodeURIComponent(startPath)}`,
+                  );
+                  const data = (await res.json()) as {
+                    path: string;
+                    parent: string | null;
+                    entries: { name: string; path: string }[];
+                  };
+                  setBrowsePath(data.path);
+                  setBrowseParent(data.parent);
+                  setBrowseEntries(data.entries);
+                } catch (e) {
+                  setBrowseEntries([]);
+                  setBrowseParent(null);
+                } finally {
+                  setIsBrowsing(false);
+                }
+              }}
+            >
+              Browse directories
+            </button>
+          </div>
           <input
             className="w-full rounded-md border border-slate-600 bg-slate-900 px-4 py-3 text-left text-white placeholder:text-slate-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             type="url"
@@ -267,6 +320,93 @@ export function App() {
           </div>
         </div>
       </section>
+      {isBrowseOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-lg rounded-lg border border-slate-700 bg-slate-900 p-4 text-left">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-base font-semibold text-white">Choose a directory</h2>
+              <button
+                type="button"
+                className="rounded-md px-2 py-1 text-sm text-slate-300 hover:bg-slate-800"
+                onClick={() => setIsBrowseOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+            <div className="mb-3 text-sm text-slate-300">Current: {browsePath}</div>
+            <div className="mb-3 flex items-center gap-2">
+              <button
+                type="button"
+                className="rounded-md bg-slate-700 px-3 py-1 text-xs font-semibold text-white transition hover:bg-slate-600 disabled:opacity-50"
+                disabled={!browseParent}
+                onClick={async () => {
+                  if (!browseParent) return;
+                  setIsBrowsing(true);
+                  try {
+                    const res = await fetch(
+                      `${API_BASE}/browse?path=${encodeURIComponent(browseParent)}`,
+                    );
+                    const data = await res.json();
+                    setBrowsePath(data.path);
+                    setBrowseParent(data.parent);
+                    setBrowseEntries(data.entries);
+                  } catch {}
+                  setIsBrowsing(false);
+                }}
+              >
+                Up
+              </button>
+              <button
+                type="button"
+                className="rounded-md bg-blue-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-blue-500"
+                onClick={() => {
+                  setSelectedDest(browsePath);
+                  try {
+                    localStorage.setItem('destDir', browsePath);
+                  } catch {}
+                  setIsBrowseOpen(false);
+                }}
+              >
+                Select this folder
+              </button>
+            </div>
+            <div className="max-h-64 overflow-y-auto rounded-md border border-slate-800">
+              {isBrowsing ? (
+                <div className="p-3 text-sm text-slate-400">Loading…</div>
+              ) : browseEntries.length === 0 ? (
+                <div className="p-3 text-sm text-slate-400">No subdirectories</div>
+              ) : (
+                <ul className="divide-y divide-slate-800">
+                  {browseEntries.map((entry) => (
+                    <li key={entry.path}>
+                      <button
+                        type="button"
+                        className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-slate-200 hover:bg-slate-800"
+                        onClick={async () => {
+                          setIsBrowsing(true);
+                          try {
+                            const res = await fetch(
+                              `${API_BASE}/browse?path=${encodeURIComponent(entry.path)}`,
+                            );
+                            const data = await res.json();
+                            setBrowsePath(data.path);
+                            setBrowseParent(data.parent);
+                            setBrowseEntries(data.entries);
+                          } catch {}
+                          setIsBrowsing(false);
+                        }}
+                      >
+                        <span className="truncate">{entry.name}</span>
+                        <span className="text-slate-400">›</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

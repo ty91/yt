@@ -24,11 +24,11 @@ Send a request to `GET http://localhost:6172/health`.
 
 ## Streaming download flow
 
-1. Start a download with `GET /download/stream?url=<youtube-url>`. The response is an SSE stream
-   that resolves the final filename up front, reuses an existing cached file when present (and
-   refreshes its timestamp), or runs `yt-dlp` while emitting log lines. When complete, it sends the
-   output `filename` located in `api/download/`.
-2. Retrieve the MP3 via `GET /download/{filename}`. The response streams the file with a
+1. Start a download with `GET /download/stream?url=<youtube-url>&dest=<dir>` (dest is required).
+   - The server writes the MP3 directly into the specified destination directory under your home folder.
+   - If the target file already exists, it is reused and its timestamp is refreshed.
+   - Progress logs are emitted as SSE events during download.
+2. Retrieve the MP3 via `GET /download/{filename}?dest=<dir>`. The response streams the file with a
    `Content-Disposition` header.
 
 ## CORS
