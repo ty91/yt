@@ -11,12 +11,16 @@ uv sync
 ## Run the development server
 
 ```bash
-uv run uvicorn main:app --reload
+# Option A: run uvicorn directly
+uv run uvicorn main:app --host 0.0.0.0 --port 6172 --reload
+
+# Option B: run the module (defaults to port 6172)
+uv run python main.py
 ```
 
 ## Health check
 
-Send a request to `GET /health`.
+Send a request to `GET http://localhost:6172/health`.
 
 ## Streaming download flow
 
@@ -27,8 +31,6 @@ Send a request to `GET /health`.
 2. Retrieve the MP3 via `GET /download/{filename}`. The response streams the file with a
    `Content-Disposition` header.
 
-### Cookies (optional)
+## CORS
 
-If YouTube requires authentication, mount a cookies text file inside the container and set the
-`YT_DLP_COOKIES_PATH` environment variable (defaults to `/youtube_cookie.txt`). When the file exists,
-the backend automatically passes `--cookies` to `yt-dlp` for every request.
+For development, CORS is enabled only for `http://localhost:5173` (Vite dev server).

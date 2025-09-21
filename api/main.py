@@ -159,7 +159,7 @@ def fetch_download(filename: str) -> FileResponse:
 def main() -> None:
     import uvicorn
 
-    uvicorn.run("main:app", host="0.0.0.0", port=8000)
+    uvicorn.run("main:app", host="0.0.0.0", port=6172)
 
 
 if __name__ == "__main__":

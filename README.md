@@ -1,10 +1,24 @@
+## Overview
 
-## Docker Compose
+- Web frontend: `web/` — connects to a local API at `http://localhost:6172`.
+- API server: `api/` — runs on your machine (no container/orchestrator assumed).
 
-Build and run the full stack with:
+## Local Development
+
+Run the API at port 6172:
 
 ```bash
-docker compose up --build
+cd api
+uv sync
+uv run uvicorn main:app --host 0.0.0.0 --port 6172 --reload
 ```
 
-The API listens on the internal network as `api:8000`, proxied by Nginx at `http://localhost:8080`.
+Run the web app (Vite dev server at 5173):
+
+```bash
+cd web
+pnpm install
+pnpm dev
+```
+
+The frontend will only render after it can reach `GET http://localhost:6172/health`.
