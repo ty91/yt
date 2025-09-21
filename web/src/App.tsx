@@ -1,6 +1,5 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react';
 
-// Base URL for the local API server. Adjust the port if needed.
 const API_BASE = 'http://localhost:6172';
 
 type SsePayload = {
@@ -26,9 +25,6 @@ function parseSseData(raw: string | null): SsePayload | null {
   }
 }
 
-// Browser-initiated downloads are no longer used since the API writes
-// directly to the user-selected destination directory.
-
 export function App() {
   const [videoUrl, setVideoUrl] = useState('');
   const [selectedDest, setSelectedDest] = useState<string | null>(() => {
@@ -45,13 +41,12 @@ export function App() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const eventSourceRef = useRef<EventSource | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>(
-    'connecting',
+    'connecting'
   );
   const [, setConnectionError] = useState<string | null>(null);
   const connectionCheckInFlight = useRef(false);
   const [copied, setCopied] = useState(false);
-  const UVX_CMD =
-    'uvx --from "git+https://github.com/ty91/yt.git@main#subdirectory=api" yt-api';
+  const UVX_CMD = 'uvx --from "git+https://github.com/ty91/yt.git@main#subdirectory=api" yt-api';
 
   useEffect(() => {
     return () => {
@@ -108,6 +103,10 @@ export function App() {
     event.preventDefault();
     if (!videoUrl.trim()) {
       setErrorMessage('Enter a YouTube URL.');
+      return;
+    }
+    if (!selectedDest) {
+      setErrorMessage('Choose a destination directory.');
       return;
     }
 
@@ -203,7 +202,7 @@ export function App() {
               <p className="text-sm text-slate-300">Start the local API with:</p>
               <div className="mt-2 flex items-center gap-2">
                 <pre className="flex-1 overflow-x-auto rounded-md border border-slate-700 bg-slate-900 p-3 text-left font-mono text-xs text-slate-200">
-{UVX_CMD}
+                  {UVX_CMD}
                 </pre>
                 <button
                   type="button"
@@ -257,7 +256,7 @@ export function App() {
                 setIsBrowsing(true);
                 try {
                   const res = await fetch(
-                    `${API_BASE}/browse?path=${encodeURIComponent(startPath)}`,
+                    `${API_BASE}/browse?path=${encodeURIComponent(startPath)}`
                   );
                   const data = (await res.json()) as {
                     path: string;
@@ -290,7 +289,7 @@ export function App() {
           <button
             className="rounded-md bg-blue-500 px-4 py-3 font-semibold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-blue-800"
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !selectedDest}
           >
             {isSubmitting ? 'Downloading…' : 'Download audio'}
           </button>
@@ -344,7 +343,7 @@ export function App() {
                   setIsBrowsing(true);
                   try {
                     const res = await fetch(
-                      `${API_BASE}/browse?path=${encodeURIComponent(browseParent)}`,
+                      `${API_BASE}/browse?path=${encodeURIComponent(browseParent)}`
                     );
                     const data = await res.json();
                     setBrowsePath(data.path);
@@ -386,7 +385,7 @@ export function App() {
                           setIsBrowsing(true);
                           try {
                             const res = await fetch(
-                              `${API_BASE}/browse?path=${encodeURIComponent(entry.path)}`,
+                              `${API_BASE}/browse?path=${encodeURIComponent(entry.path)}`
                             );
                             const data = await res.json();
                             setBrowsePath(data.path);
