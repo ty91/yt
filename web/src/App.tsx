@@ -1,5 +1,8 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react';
 
+// Base URL for the local API server. Adjust the port if needed.
+const API_BASE = 'http://localhost:6172';
+
 type SsePayload = {
   type: 'log' | 'error' | 'complete';
   message?: string;
@@ -41,6 +44,11 @@ export function App() {
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const eventSourceRef = useRef<EventSource | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>(
+    'connecting',
+  );
+  const [, setConnectionError] = useState<string | null>(null);
+  const connectionCheckInFlight = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -50,6 +58,48 @@ export function App() {
       }
     };
   }, []);
+
+  // Attempt to connect to the local API before rendering the main app.
+  // Keep pinging periodically until connected.
+  useEffect(() => {
+    if (connectionStatus === 'connected') {
+      return;
+    }
+
+    let isCancelled = false;
+
+    const check = async () => {
+      if (connectionCheckInFlight.current || isCancelled) return;
+      connectionCheckInFlight.current = true;
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        const response = await fetch(`${API_BASE}/health`, { signal: controller.signal });
+        clearTimeout(timeout);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        if (!isCancelled) {
+          setConnectionStatus('connected');
+          setConnectionError(null);
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          setConnectionStatus('error');
+          setConnectionError(error instanceof Error ? error.message : 'Connection failed');
+        }
+      } finally {
+        connectionCheckInFlight.current = false;
+      }
+    };
+
+    void check();
+    const intervalId = setInterval(check, 1000);
+    return () => {
+      isCancelled = true;
+      clearInterval(intervalId);
+    };
+  }, [connectionStatus]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -69,7 +119,7 @@ export function App() {
     setLogs([]);
 
     const encodedUrl = encodeURIComponent(videoUrl.trim());
-    const eventSource = new EventSource(`/download/stream?url=${encodedUrl}`);
+    const eventSource = new EventSource(`${API_BASE}/download/stream?url=${encodedUrl}`);
     eventSourceRef.current = eventSource;
 
     const handleFailure = (message: string) => {
@@ -131,7 +181,7 @@ export function App() {
       try {
         setInfoMessage('Finalizing download…');
         const filename = payload.filename;
-        const response = await fetch(`/download/${encodeURIComponent(filename)}`);
+        const response = await fetch(`${API_BASE}/download/${encodeURIComponent(filename)}`);
         if (!response.ok) {
           throw new Error('Failed to fetch audio file.');
         }
@@ -150,6 +200,20 @@ export function App() {
       }
     });
   };
+
+  if (connectionStatus !== 'connected') {
+    return (
+      <main className="min-h-screen bg-slate-950 text-white">
+        <section className="mx-auto flex max-w-2xl flex-col items-center gap-6 px-6 pb-12 pt-16 text-center sm:pt-24">
+          <div className="w-full text-left sm:text-center">
+            <h1 className="text-3xl font-semibold">YouTube to MP3</h1>
+            <p className="mt-2 text-sm text-slate-300">connecting to the api on localhost:6172</p>
+            <div className="mx-auto mt-4 h-6 w-6 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">

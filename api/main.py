@@ -1,5 +1,4 @@
 import asyncio
-import base64
 import json
 import logging
 import os
@@ -9,28 +8,26 @@ from typing import AsyncIterator
 from urllib.parse import quote
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import HttpUrl
 
 app = FastAPI()
 
+# CORS: allow only local Vite dev origin for now
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=False,
+    allow_methods=["GET", "OPTIONS"],
+    allow_headers=["*"],
+)
+
 DOWNLOAD_ROOT = Path(__file__).resolve().parent / "download"
 DOWNLOAD_ROOT.mkdir(exist_ok=True)
 
-COOKIES_PATH = Path(__file__).resolve().parent / "youtube_cookies.txt"
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-# on startup
-@app.on_event("startup")
-def startup() -> None:
-    cookies = os.getenv("YOUTUBE_COOKIES")
-    if cookies:
-        cookies = base64.b64decode(cookies).decode("utf-8")
-        with open(COOKIES_PATH, "w") as f:
-            f.write(cookies)
 
 
 def _base_command(url: str) -> list[str]:
@@ -45,8 +42,6 @@ def _base_command(url: str) -> list[str]:
         "--newline",
         "--no-playlist",
     ]
-    if COOKIES_PATH.is_file():
-        command += ["--cookies", str(COOKIES_PATH)]
     logger.info(command)
     return command
 
