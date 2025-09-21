@@ -14,10 +14,9 @@ from pydantic import HttpUrl
 
 app = FastAPI()
 
-# CORS: allow only local Vite dev origin for now
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "https://yt.dogu.ooo"],
     allow_credentials=False,
     allow_methods=["GET", "OPTIONS"],
     allow_headers=["*"],

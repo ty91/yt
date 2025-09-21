@@ -34,3 +34,19 @@ Send a request to `GET http://localhost:6172/health`.
 ## CORS
 
 For development, CORS is enabled only for `http://localhost:5173` (Vite dev server).
+
+## Run anywhere with `uvx`
+
+You can run the API without cloning the repo using `uvx` from a VCS URL. Requirements: Python 3.9+, `uv`, and `ffmpeg` on `PATH`.
+
+Examples (replace `<OWNER>/<REPO>` and branch/tag as needed):
+
+```bash
+# Run directly from GitHub via VCS URL, pointing to the api/ subdirectory
+uvx --from "git+https://github.com/<OWNER>/<REPO>.git@main#subdirectory=api" yt-api
+
+# Pin a tag or commit
+uvx --from "git+https://github.com/<OWNER>/<REPO>.git@v0.1.0#subdirectory=api" yt-api
+```
+
+The CLI `yt-api` entry point starts Uvicorn on port 6172.

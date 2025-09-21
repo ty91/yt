@@ -9,3 +9,13 @@ dependencies = [
     "uvicorn[standard]>=0.35.0",
     "yt-dlp>=2025.9.5",
 ]
+
+[project.scripts]
+yt-api = "main:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["main"]
